@@ -1,30 +1,29 @@
-# Issue tracker: Local Markdown
+# Issue tracker: GitHub Issues
 
-Issues and specs for this repo live as markdown files in `.scratch/`.
+Issues and specs for this repo live on **GitHub Issues**: https://github.com/Aszeroo/ma-noti/issues
 
 ## Conventions
 
-- One feature per directory: `.scratch/<feature-slug>/`
-- The spec is `.scratch/<feature-slug>/spec.md`
-- Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` — never a single combined tickets file
-- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
-- Comments and conversation history append to the bottom of the file under a `## Comments` heading
+- The spec for a feature is published as a **parent issue**; its editable source of truth stays as markdown under `.scratch/<feature-slug>/spec.md`
+- Implementation tickets are one GitHub issue per ticket, titled `NN — <title>`, published in dependency order (blockers first)
+- Blocking edges go in a `## Blocked by` section of each ticket body, listing the blocking issue numbers (`#N`) — GitHub has no native blocking relation
+- Triage state is recorded as GitHub labels (see `triage-labels.md` for the label strings)
+- Discussion, progress, and status changes happen in the issue itself
 
 ## When a skill says "publish to the issue tracker"
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+Create issues on `Aszeroo/ma-noti` with `gh` — spec as parent first, then tickets in dependency order, each labelled `ready-for-agent`.
 
 ## When a skill says "fetch the relevant ticket"
 
-Read the file at the referenced path. The user will normally pass the path or the issue number directly.
+Read the GitHub issue by number (`gh issue view <n> -R Aszeroo/ma-noti`) — the user will normally pass the number or URL directly.
 
 ## Wayfinding operations
 
-Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
+Used by `/wayfinder`. The **map** is a file with one **child** ticket per question.
 
 - **Map**: `.scratch/<effort>/map.md` — the Notes / Decisions-so-far / Fog body.
-- **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`, with the question in the body. A `Type:` line records the ticket type (`research`/`prototype`/`grilling`/`task`); a `Status:` line records `claimed`/`resolved`.
-- **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
-- **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
-- **Claim**: set `Status: claimed` and save before any work.
-- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+- **Child ticket**: a GitHub issue whose body starts with a `Type:` line (`research`/`prototype`/`grilling`/`task`); blocking via a `Blocked by: #N, #N` section; state via a `Status:` line (`claimed`/`resolved`) edited in the body.
+- **Frontier**: open issues that are unblocked (every `Blocked by` issue resolved) and unclaimed; first by number wins.
+- **Claim**: set `Status: claimed` in the issue body before any work.
+- **Resolve**: post the answer as an issue comment, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
