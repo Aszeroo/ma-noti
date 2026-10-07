@@ -1,0 +1,31 @@
+{
+  "name": "ma-noti",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ระบบแจ้งเตือนงานต่ออายุ — อ่าน Google Sheet → แจ้งเตือน 3 ฝ่าย (DRY_RUN)",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.3"
+  }
+}
