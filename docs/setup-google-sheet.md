@@ -74,7 +74,7 @@ curl -i -X POST http://localhost:3000/api/cron/daily-check \
 | สถานะ | ผลลัพธ์ |
 |---|---|
 | env ครบ + แชร์ชีตแล้ว | `200 {"ok":true,"mode":"dry_run","logged":N}` |
-| `DRY_RUN=false` | `mode:"send"` — ท่อรันเต็มรูปแบบ เขียน log marker `dry_run=false` แต่ยัง **ไม่ส่งจริง** (ผู้ส่งจริงมาใน ticket #10) |
+| `DRY_RUN=false` | `mode:"send"` — ทอรันเต็มรปูแบบ ยิงจริงผาน sender ทีใส env ครบ (Brevo/Discord/Telegram) แลวบันทึก `send_status` ลง details ของ log row (docs/setup-senders.md) |
 | ยังไม่ใส่ `GOOGLE_*` | `500` พร้อมชื่อตัวแปร env ที่ขาด (ไม่ crash — cron จะเห็น error ชัดเจน) |
 
 ตรวจ Supabase (SQL Editor) — ทุกรอบรันต้องมีแถว "รอบรัน" (`person_id = null`) เสมอ
