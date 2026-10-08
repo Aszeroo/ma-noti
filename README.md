@@ -1,25 +1,28 @@
-# ma-noti — ระบบแจ้งเตือนงานต่ออายุ
+# ma-noti — ระบบแจ้างเตือนงานต่ออายุ
 
-โปรเจกต์ Next.js (App Router) + TypeScript + pnpm + Vitest
-ฐานข้อมูล/Auth: Supabase — deploy: Vercel (ดูคู่มือตั้งค่าที่ `docs/setup-supabase.md`)
+โปรเจกต Next.js (App Router) + TypeScript + pnpm + Vitest
+ฐานข้อมูล/Auth: Supabase — deploy: Vercel (ดูคูมือตังคาที่ `docs/setup-supabase.md`)
 
-## คำสั่ง
+## คำสั่ ง
 
 ```bash
-pnpm install       # ติดตั้ง dependencies (ห้ามใช้ npm/yarn)
-pnpm dev           # dev server ถิ่่น http://localhost:3000
+pnpm install       # ติดตัง dependencies (หามใช npm/yarn)
+pnpm dev           # dev server ที่ http://localhost:3000
 pnpm build         # build production
 pnpm typecheck     # tsc --noEmit
-pnpm test          # วิ่งเทสต์ Vitest (ข้อมูล fixture ปลอมทั้งหมด — ไม่มีเน็ต)
+pnpm test          # รันเทส Vitest (ขอมูล fixture ปลอมทังหมด — ไมมีเนต)
 ```
 
-## โครงส้างหลัก (ปัจจุบัน — ticket #2)
+## โครงสรางหลัก (ปัจุบัน — ticket #6)
 
-- `app/api/cron/daily-check/route.ts` — endpoint ของ cron (ป้องกกันด้วย `CRON_SECRET`, GET/POST)
-- `lib/` — แยกชั้่น: `config/` อ่าน env · `cron/` ท่อรัน (stub) + ตรวจ secret · `supabase/` client ฝั่่ง server
-- `supabase/migrations/` — SQL schema 5 ตาราง + RLS (แปะใน SQL Editor ของ Supabase)
-- `vercel.json` — cron รายวัน `0 1 * * *` UTC = **08:00 Asia/Bangkok** (Vercel cron ใช้ UTC)
-- `.env.example` — env ครบทุกตัวตามสเปก (placeholder เท่านั้น — ห้าม commit ค่าจริง)
+- `app/api/cron/daily-check/route.ts` — endpoint ของ cron (ปองกันดวย `CRON_SECRET`, GET/POST)
+- `app/login` · `app/history` · `app/auth/callback` — ล็อกอินดวย magic link (allowlist) + หนาประวัตการแจงเตือน (ticket #6)
+- `proxy.ts` — refresh session + กันหนาที่ยังไมล็อกอินไวทิดานหนาสุด (Next 16: middleware เกา renamed เปน proxy)
+- `lib/` — แยกชั้ น: `config/` อาน env · `cron/` ทอรัน (stub) + ตรวจ secret · `supabase/` client ฝง server (admin สำหรับ cron + session สำหรับ RLS) · `auth/` เชค allowlist + server actions
+- `supabase/migrations/` — SQL schema 5 ตาราง + RLS (ticket #2) และตาราง `allowed_emails` (ticket #6) — แปะใน SQL Editor ของ Supabase
+- `vercel.json` — cron รายวัน `0 1 * * *` UTC = **08:00 Asia/Bangkok** (Vercel cron ใช UTC)
+- `.env.example` — env ครบทุกตัวตามสเปก (placeholder เทานั้ น — หาม commit คาจริง)
 
-> สถานะ: ท่อรันรายวันทดที้เป็น **stub** รันในโหมด `DRY_RUN` (เขียน `notify_log` แต่ไม่ส่งจริง)
-> domain logic (อ่านชีต/คำนวณ/digest) มาใน ticket #3 และ notifiers 3 ช่องทางใน ticket #4
+> สถานะ: ทอรันรายวันทีเป็น **stub** รันในโหมด `DRY_RUN` (เขียน `notify_log` แตไมส่งจริง)
+> domain logic (อานชิต/คำนวณ/digest) มาใน ticket #3 และ notifiers 3 ชองทางใน ticket #4
+> หนาว็บจัดการ (recipients/assignments/settings) ยังไม่มา — เป็น ticket ถัดไป; ตอนนี้มี login + history ก่อน

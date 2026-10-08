@@ -47,7 +47,24 @@ pnpm build
 ผลลัพธที่ได้:
 - ตารางตรงตามสเปก: `people`, `channels`, `assignments`, `settings` (seed แถวเดียว id=1, รอบเตอน 30/14/7/3/1 และ 60/45/30), `notify_log` (มีคอลัม `dry_run` เปน DRY_RUN marker)
 - **RLS เปดทุกตาราง + มี policy ใหเฉพาะ `authenticated`** → ล็อกอินแลวอาง/เขียนไดทงหมด, ยังไมล็อกอิน (anon) แตะไมได
-- หมายเหต: การล็อกอินดวย magic link + allowlist จะมาใน ticket #3 — ตอนนจึงยังเขาเว็บไมได แต่ cron เขียน log ผาน service role ไดแลว
+- หมายเหต: cron เขียน log ผาน service role ไดแลว — หนาเว็บ (login + history + allowlist) เปดใชใน ticket #6 ตอทายขางลาง
+
+## 2.1) migration ticket #6: allowlist + ล็อกอิน magic link
+
+1. dashboard → **SQL Editor** → **New query**
+2. เปดไฟล `supabase/migrations/20261008000000_auth_allowlist.sql` จาก repo → copy ทังไฟลวางลง query → **Run**
+3. **เพิมอเี มลของคนในทีมเขา allowlist** (ทำผาน SQL Editor / service_role เทานัน — หนาเว็บแกเองไมได):
+
+   ```sql
+   insert into public.allowed_emails (email) values ('someone@example.com');
+   -- ตรวจ: select * from public.allowed_emails;
+   ```
+
+4. ทดสอบล็อกออิน: `pnpm dev` → เปด `http://localhost:3000` → จะถูกส่งไปหนา login → กรอกอีเมลใน allowlist → เปิดลิงกในอีเมล
+   - คนนอก allowlist: ระบบไมสงลิงกให (pre-check) และถาหลุดมาถึง callback จะถูก signOut + เด้งกลับหนา login (fail-closed)
+   - ล็อกอินแล้วเห็นหน้า **ประวัติการแจ้งเตือน** (`notify_log` เวลา / ผู้รับ / ช่องทาง / จำนวนรายการ / DRY_RUN) — ตอนนี้อาจยังว่าง (รอ cron รันครั้งแรก)
+   - ออกจากระบบ: กดปุ่มมุมขวาบนของหน้าประวัติ
+
 
 ## 3) จัวะคีย์มาใส env
 
