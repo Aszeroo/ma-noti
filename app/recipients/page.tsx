@@ -2,7 +2,18 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import type { CSSProperties } from 'react';
 
-import { DataTable, PageShell, cellStyle } from '@/components/ui';
+import {
+  DataTable,
+  PageShell,
+  alertText,
+  buttonStyle,
+  cardStyle,
+  cellStyle,
+  dangerButtonStyle,
+  fieldStyle,
+  flashErrorText,
+  ghostButtonStyle,
+} from '@/components/ui';
 import {
   addChannel,
   addPerson,
@@ -43,54 +54,7 @@ const CHANNEL_LABEL: Record<string, string> = {
 /** placeholder รวมทุกรูปแบบในช่องเดียว (หน้านี้เป็น server component ล้วน ไม่ใช้ JavaScript) */
 const CONTACT_HINT = 'someone@team.example · https://discord.com/api/webhooks/… · 123456789';
 
-const fieldStyle: CSSProperties = {
-  padding: '0.375rem 0.625rem',
-  fontSize: '0.95rem',
-  border: '1px solid #999',
-  borderRadius: '0.375rem',
-};
-const buttonStyle: CSSProperties = {
-  padding: '0.375rem 0.875rem',
-  fontSize: '0.95rem',
-  backgroundColor: '#1d4ed8',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '0.375rem',
-  cursor: 'pointer',
-};
-const ghostButtonStyle: CSSProperties = {
-  ...buttonStyle,
-  backgroundColor: '#fff',
-  color: '#1a1a1a',
-  border: '1px solid #999',
-};
-const dangerButtonStyle: CSSProperties = {
-  ...ghostButtonStyle,
-  color: '#b91c1c',
-  border: '1px solid #b91c1c',
-};
-const cardStyle: CSSProperties = {
-  border: '1px solid #ddd',
-  borderRadius: '0.5rem',
-  padding: '1rem',
-  marginBottom: '1.25rem',
-};
 
-/** searchParams ?error=<code> → ข้อความแบนเนอร์ (key ที่ไม่รู้จัก → ไม่แสดง) */
-function flashErrorText(
-  params: Record<string, string | string[] | undefined>,
-): string | undefined {
-  const errorKey = Array.isArray(params.error) ? params.error[0] : params.error;
-  // Object.hasOwn กันคีย์ตกค้างบน prototype chain (เช่น ?error=__proto__ → ได้ Object.prototype ไป render เป็น object ไมไ ด้)
-  return errorKey && Object.hasOwn(ERROR_TEXT, errorKey) ? ERROR_TEXT[errorKey] : undefined;
-}
-
-/** รวมแบนเนอร์แดงของหน้า: flash จาก action มาก่อน error จาก query */
-function alertText(error: { message: string } | null | undefined, flash?: string): string | undefined {
-  if (flash) return flash;
-  if (error) return `อ่านข้อมูลผู้รับไม่ได้: ${error.message}`;
-  return undefined;
-}
 
 /** ไม่มี query error และไม่มีคนในฐานข้อมูล → แสดงคำแนะนำเพิ่มคนแรก */
 function isEmptyList(queryFailed: boolean, personCount: number): boolean {
@@ -324,7 +288,7 @@ export default async function RecipientsPage({
     .returns<PersonRow[]>();
 
   const people = peopleRows(data);
-  const alert = alertText(error, flashErrorText(params));
+  const alert = alertText(error, flashErrorText(ERROR_TEXT, params), 'อ่านข้อมูลผู้รับไม่ได้');
   const showEmptyHint = isEmptyList(Boolean(error), people.length);
 
   return (
@@ -336,6 +300,10 @@ export default async function RecipientsPage({
       <p style={{ color: '#555' }}>
         ผู้รับหนึ่งคนได้หลายช่องทาง (อีเมล / Discord / Telegram) — ข้อมูลติดต่ออยู่ในฐานข้อมูลเท่านั้น
         การแก้ไขมีผลกับ cron รอบถัดไปทันทีโดยไม่ต้อง deploy
+        {' '}
+        <a href="/assignments" style={{ color: '#1d4ed8' }}>
+          การจัดฝายตอแท็บ
+        </a>
       </p>
 
       {alert && (

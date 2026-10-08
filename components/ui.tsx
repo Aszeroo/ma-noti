@@ -9,6 +9,64 @@ import { signOut } from '@/lib/auth/actions';
 
 export const cellStyle: CSSProperties = { padding: '0.5rem 0.75rem', borderBottom: '1px solid #ddd' };
 
+/** สไตลฟอรม ปุม การด มาตรฐาน (หน recipients/settings/assignments ใชรวมกน)
+ * แยกมาไวทเดียวกบ components/ui.tsx เพือใหโครงตรงกนทสิด (fallow clone group)
+ */
+export const fieldStyle: CSSProperties = {
+  padding: '0.375rem 0.625rem',
+  fontSize: '0.95rem',
+  border: '1px solid #999',
+  borderRadius: '0.375rem',
+};
+export const buttonStyle: CSSProperties = {
+  padding: '0.375rem 0.875rem',
+  fontSize: '0.95rem',
+  backgroundColor: '#1d4ed8',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '0.375rem',
+  cursor: 'pointer',
+};
+export const ghostButtonStyle: CSSProperties = {
+  ...buttonStyle,
+  backgroundColor: '#fff',
+  color: '#1a1a1a',
+  border: '1px solid #999',
+};
+export const dangerButtonStyle: CSSProperties = {
+  ...ghostButtonStyle,
+  color: '#b91c1c',
+  border: '1px solid #b91c1c',
+};
+export const cardStyle: CSSProperties = {
+  border: '1px solid #ddd',
+  borderRadius: '0.5rem',
+  padding: '1rem',
+  marginBottom: '1.25rem',
+};
+
+/** searchParams ?error=<code> → ข้อความแบนเนอร์ (key ที่ไม่รู้จัก → ไม่แสดง) */
+export function flashErrorText(
+  errorText: Record<string, string>,
+  params: Record<string, string | string[] | undefined>,
+): string | undefined {
+  const errorKey = Array.isArray(params.error) ? params.error[0] : params.error;
+  // Object.hasOwn กันคีย์ตกค้างบน prototype chain (เช่น ?error=__proto__ → ได้ Object.prototype ไป render เป็น object ไมไ ด้)
+  return errorKey && Object.hasOwn(errorText, errorKey) ? errorText[errorKey] : undefined;
+}
+
+
+/** รวมแบนเนอร์แดงของหน้า: flash จาก action มาก่อน error จาก query */
+export function alertText(
+  error: { message: string } | null | undefined,
+  flash: string | undefined,
+  unreadable: string,
+): string | undefined {
+  if (flash) return flash;
+  if (error) return `${unreadable}: ${error.message}`;
+  return undefined;
+}
+
 const shellStyle: CSSProperties = {
   fontFamily: 'system-ui, sans-serif',
   maxWidth: '56rem',
