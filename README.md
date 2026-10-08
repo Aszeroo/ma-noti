@@ -26,4 +26,4 @@ pnpm test          # รันเทส Vitest (ขอมูล fixture ปล�
 > สถานะ: ทอรันรายวันตอกับของจริงแลว — อาน Google Sheet ทุกแท็บ (Service Account แบบ Viewer) → โหลดคอนฟิก 4 ตาราง →
 > `runDaily` → เขียน `notify_log` ตอคน/ชองทาง + แถวระดับรอบรัน (ทุกกรอบรันมีหลักฐานเสมอ แมคอนฟิกวาง)
 > `DRY_RUN=true` = เขียน log แบบ dry_run=true; ถาปด (false) marker จะเปน false แต **ยังไมมีการสงจริง** (ตัวสงจริงมาใน ticket #10)
-> คอนฟิกทีม (people/channels/assignments) ยังเติมผาน SQL Editor — หนา admin เปน ticket ถัดไป; คูมือชีตใหม: `docs/setup-google-sheet.md`
+> คอนฟิกทีม (people/channels/assignments) ยังเติมผาน SQL Editor — หนา admin เปน ticket ถัดไป; คูมือชีตใหม: `docs/setup-google-sheet.md`; คู้มือตังคาผู้ส่งจริง (Brevo/Discord/Telegram): `docs/setup-senders.md`

@@ -1,79 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { handleDailyCheck, todayInTimezone } from '@/lib/cron/handler';
-import { emptyTeamConfig } from '@/lib/config/team-config';
-import { COLUMN_NAMES } from '@/lib/domain/row-reader';
 import type { DailyTabInput } from '@/lib/domain/pipeline';
 
-const CRON_SECRET = 'unit-test-cron-secret';
-const SUPABASE_URL = 'https://unit-test.supabase.co';
-const SERVICE_ROLE_KEY = 'unit-test-service-role-key';
+import {
+  CRON_SECRET,
+  NOW,
+  SERVICE_ROLE_KEY,
+  captured,
+  fakeTab,
+  installCronFixtures,
+  offlineDeps,
+  request,
+} from './helpers/cron-fixtures';
 
-interface CapturedRequest {
-  url: string;
-  body: unknown;
-  apikey: string | null;
-}
+// tests/cron-handler.test.ts - endpoint shell (ticket #5) + no sender calls in DRY_RUN (ticket #10)
+// global fetch/env stubs live in tests/helpers/cron-fixtures.ts (shared with tests/cron-send.test.ts)
+installCronFixtures();
 
-const captured: CapturedRequest[] = [];
-
-function fakeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  captured.push({
-    url: String(input),
-    body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body ?? null,
-    apikey: new Headers(init?.headers).get('apikey'),
-  });
-  return Promise.resolve(new Response('{}', { status: 201 }));
-}
-
-function request(method: 'GET' | 'POST', headers: Record<string, string> = {}): Request {
-  return new Request(`${SUPABASE_URL}/api/cron/daily-check`, { method, headers });
-}
-
-// ---- ของปลอมสำหรับเปลือกบาง (inject ผ่าน deps — ไมแตะเน็ตเวอร์กในเทส) ----
-
-/** ดีลจาก shell คุมเวลา: Bangkok 08:00 ของว้น 2026-10-08 */
-const NOW = new Date('2026-10-08T01:00:00.000Z');
-
-/** แท็บดิบปลอม 1 แถว (หมดอายุใน 14 ว้น = ตรงรอบ sales) — ข้อมูลปลอมทังหมด */
-function fakeTab(jobCode: string): DailyTabInput {
-  return {
-    tabName: 'ทีมทดสอบ',
-    section: {
-      sectionName: 'งานต่ออายุ',
-      headers: Object.values(COLUMN_NAMES),
-      rows: [
-        {
-          cells: [
-            jobCode, 'ชื่ องานทดสอบ', 'SSL', 'โดเมน', '22/10/2026', '31/12/2026',
-            'partner-ทดสอบ', 'เจ้าของ-ทดสอบ', 'รอขอใบราคา', '', '', '',
-          ],
-        },
-      ],
-    },
-  };
-}
-
-/** เปลือกบางอยางนอยที่ตองเสมอในทุกเคสที่ผาน secret: ไมอาน Sheet/โหลด DB จริงในเทส */
-const offlineDeps = {
-  readTabs: async () => [] as DailyTabInput[],
-  loadConfig: async () => emptyTeamConfig(),
-  now: () => NOW,
-};
-
-beforeEach(() => {
-  captured.length = 0;
-  vi.stubGlobal('fetch', vi.fn(fakeFetch));
-  vi.stubEnv('CRON_SECRET', CRON_SECRET);
-  vi.stubEnv('SUPABASE_URL', SUPABASE_URL);
-  vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', SERVICE_ROLE_KEY);
-  vi.stubEnv('DRY_RUN', 'true');
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
-});
 
 describe('GET/POST /api/cron/daily-check — ครบตาม AC ของ ticket #2', () => {
   it('ไม่มี secret → 401 ปฏิเสธ และไม่เขียน notify_log', async () => {

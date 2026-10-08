@@ -83,7 +83,7 @@ openssl rand -hex 32   # ผลลัพธ 1 บรรทัด = คาขอ�
 ## 4) เติม `.env` ทองถิน + ทดสอบโคงสราง
 
 ```bash
-cp .env.example .env   # แล้วเติมค่า: SUPABASE_*, CRON_SECRET, GOOGLE_* (จำเป็นตั้งแต่ ticket #5 — ดูคู่มือ docs/setup-google-sheet.md) / BREVO_* ใส่ placeholder ไว้ก่อน
+cp .env.example .env   # แล้วเติมค่า: SUPABASE_*, CRON_SECRET, GOOGLE_* (จำเป็นตั้งแต่ ticket #5 — ดูคู่มือ docs/setup-google-sheet.md) / BREVO_* + TELEGRAM_BOT_TOKEN ใสตามคูมือ docs/setup-senders.md (ตองใสกอนปด DRY_RUN)
 pnpm dev               # เปิด http://localhost:3000
 ```
 

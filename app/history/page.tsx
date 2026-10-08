@@ -13,6 +13,8 @@ type HistoryRow = {
   channel: string | null;
   item_count: number;
   dry_run: boolean;
+  /** ticket #10: send_status/send_error (แถวตอบุคคล) + sent/failed (แถวลาดับรอบรัน) */
+  details: Record<string, unknown> | null;
   person: { name: string } | null;
 };
 
@@ -21,6 +23,23 @@ const CHANNEL_LABEL: Record<string, string> = {
   discord: 'Discord',
   telegram: 'Telegram',
 };
+
+/** สถานะส่งจริงของแถวต่อบุคคล/ช่องทาง — ไม่มี details.status = แสดงเหมือนเดิม (ticket #10) */
+function sendStatusOf(details: Record<string, unknown> | null): 'sent' | 'failed' | null {
+  const status = details?.send_status;
+  return status === 'sent' || status === 'failed' ? status : null;
+}
+
+function sendErrorOf(details: Record<string, unknown> | null): string {
+  return typeof details?.send_error === 'string' ? details.send_error : '';
+}
+
+/** สรุปของรอบรัน (แถว person_id = null): "ส่ง N / ไม่สำเร็จ M" เมื่อ mode = send */
+function runSendSummary(details: Record<string, unknown> | null): string | null {
+  const { sent, failed } = details ?? {};
+  if (typeof sent !== 'number' || typeof failed !== 'number') return null;
+  return `ส่ง ${sent} / ไม่สำเร็จ ${failed}`;
+}
 
 /** เวลาแสดงตาม Asia/Bangkok (ค่า timezeone_default ในตาราง settings) — พ.ศ. ตามแบบชองทีม */
 const thDateTime = new Intl.DateTimeFormat('th-TH-u-ca-buddhist', {
@@ -43,7 +62,7 @@ export default async function HistoryPage() {
 
   const { data, error } = await supabase
     .from('notify_log')
-    .select('id, sent_at, channel, item_count, dry_run, person:people(name)')
+    .select('id, sent_at, channel, item_count, dry_run, details, person:people(name)')
     .order('sent_at', { ascending: false })
     .limit(100)
     .returns<HistoryRow[]>();
@@ -109,8 +128,20 @@ export default async function HistoryPage() {
                     >
                       DRY_RUN
                     </span>
+                  ) : sendStatusOf(row.details) === 'failed' ? (
+                    <span
+                      style={{ color: '#b91c1c', fontWeight: 600 }}
+                      title={sendErrorOf(row.details)}
+                    >
+                      ส่งไม่สำเร็จ
+                    </span>
                   ) : (
-                    <span style={{ color: '#166534', fontWeight: 600 }}>ส่ งแลว</span>
+                    <span style={{ color: '#166534', fontWeight: 600 }}>ส่งแล้ว</span>
+                  )}
+                  {runSendSummary(row.details) && (
+                    <span style={{ marginLeft: '0.5rem', color: '#555' }}>
+                      {runSendSummary(row.details)}
+                    </span>
                   )}
                 </td>
               </tr>
