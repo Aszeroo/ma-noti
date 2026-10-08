@@ -83,7 +83,7 @@ openssl rand -hex 32   # ผลลัพธ 1 บรรทัด = คาขอ�
 ## 4) เติม `.env` ทองถิน + ทดสอบโคงสราง
 
 ```bash
-cp .env.example .env   # แลวเติมคา: SUPABASE_*, CRON_SECRET ( GOOGLE_* / BREVO_* ทิ้ง placeholder ไหว — ยงไมไดใชใน ticket #2 )
+cp .env.example .env   # แล้วเติมค่า: SUPABASE_*, CRON_SECRET, GOOGLE_* (จำเป็นตั้งแต่ ticket #5 — ดูคู่มือ docs/setup-google-sheet.md) / BREVO_* ใส่ placeholder ไว้ก่อน
 pnpm dev               # เปิด http://localhost:3000
 ```
 
@@ -96,7 +96,7 @@ curl -i -X POST http://localhost:3000/api/cron/daily-check
 # 2) secret ผิด → ตองได 401
 curl -i -X POST http://localhost:3000/api/cron/daily-check -H "Authorization: Bearer wrong"
 
-# 3) secret ถู → ตองได 200 {ok:true,mode:"dry_run",logged:1}
+# 3) secret ถูก → ได้ 200 {ok:true,mode:"dry_run",logged:1} เมื่อตั้ง GOOGLE_* ครบและแชร์ชีตเป็น Viewer แล้ว (ยังไม่ได้ตั้ง = 500 พร้อมชื่อบน env ที่ขาด)
 curl -i -X POST http://localhost:3000/api/cron/daily-check \
   -H "Authorization: Bearer <CRON_SECRET จาก .env>"
 ```
@@ -105,7 +105,7 @@ curl -i -X POST http://localhost:3000/api/cron/daily-check \
 
 ```sql
 select sent_at, dry_run, details from public.notify_log order by sent_at desc limit 5;
--- ตองเห็นแถว dry_run = true, details.marker = "DRY_RUN"
+-- ต้องเห็นแถว dry_run = true, details.stage = "pipeline" (แถวลำดับรอบรัน — มีทุกรอบ แม้ค่า config ยังว่าง)
 ```
 
 ## 5) Deploy Vercel + ใส env ครบทุกตัว
@@ -118,11 +118,11 @@ select sent_at, dry_run, details from public.notify_log order by sent_at desc li
    | `SUPABASE_URL` | Project URL ข้างบน |
    | `SUPABASE_ANON_KEY` | anon key |
    | `SUPABASE_SERVICE_ROLE_KEY` | service_role key (server เทานั้ น) |
-   | `GOOGLE_SHEET_ID` | Sheet ID (ticket #3 ตองการ — ใสไวไดเลย) |
-   | `GOOGLE_SERVICE_ACCOUNT` | JSON key ทั้งก้อน **บรรทัดเดียว** (เลือก type = Sensitive ไมออก log) |
+   | `GOOGLE_SHEET_ID` | Sheet ID — จำเป็นตั้งแต่ ticket #5 (อ่านชีตทุกเช้า) |
+   | `GOOGLE_SERVICE_ACCOUNT` | JSON key ทั้งก้อนเป็นบรรทัดเดียว (เลือก type = Sensitive ไม่ออก log) — ดู docs/setup-google-sheet.md |
    | `BREVO_API_KEY` | Brevo API key (ticket #4 ใช) |
    | `CRON_SECRET` | คาที generated ข้างบน |
-   | `DRY_RUN` | `true` — **คาเริ่ มตนเสมอ อยาปดจนกวา ticket #4 จะเสร็จ** (ตอนน ปดแลว endpoint จะตอบ 501) |
+   | `DRY_RUN` | `true` — ค่าเริ่มต้นเสมอ; ถ้าปิด (false) รอบรันจะเขียน log marker dry_run=false แต่ยังไม่มีตัวส่งจริง (ผู้ส่งจริงมาใน ticket #10 — endpoint นี้ log อย่างเดียว) |
 
 3. **Redeploy** ให env มีผล (Deployments → ⋯ → Redeploy)
 
