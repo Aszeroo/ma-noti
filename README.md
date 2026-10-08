@@ -21,9 +21,21 @@ pnpm test          # รันเทส Vitest (ขอมูล fixture ปล�
 - `lib/` — แยกชั้น: `config/` อ่าน env + `team-config` โหลดคอนฟิกทีมจาก Supabase · `cron/` endpoint shell (verify secret + today ตามเวลา Bangkok) · `sheets/` ตัวอ่านชีตผ่าน Service Account · `domain/` ทอรวนหลัก (pure) · `supabase/` client ฝั่ง server · `auth/` allowlist + server actions
 - `supabase/migrations/` — SQL schema 5 ตาราง + RLS (ticket #2) และตาราง `allowed_emails` (ticket #6) — แปะใน SQL Editor ของ Supabase
 - `vercel.json` — cron รายวัน `0 1 * * *` UTC = **08:00 Asia/Bangkok** (Vercel cron ใช UTC)
+- `.github/workflows/cron-fallback.yml` — ทางสำรอง: GitHub Actions ยิง endpoint เดียวกันดวย secret เดียวกัน (01:30 UTC + manual trigger)
 - `.env.example` — env ครบทุกตัวตามสเปก (placeholder เทานั้ น — หาม commit คาจริง)
 
 > สถานะ: ทอรันรายวันตอกับของจริงแลว — อาน Google Sheet ทุกแท็บ (Service Account แบบ Viewer) → โหลดคอนฟิก 4 ตาราง →
 > `runDaily` → เขียน `notify_log` ตอคน/ชองทาง + แถวระดับรอบรัน (ทุกกรอบรันมีหลักฐานเสมอ แมคอนฟิกวาง)
-> `DRY_RUN=true` = เขียน log แบบ dry_run=true; ถาปด (false) marker จะเปน false แต **ยังไมมีการสงจริง** (ตัวสงจริงมาใน ticket #10)
-> คอนฟิกทีม (people/channels/assignments) ยังเติมผาน SQL Editor — หนา admin เปน ticket ถัดไป; คูมือชีตใหม: `docs/setup-google-sheet.md`; คู้มือตังคาผู้ส่งจริง (Brevo/Discord/Telegram): `docs/setup-senders.md`
+> และสงจริง 3 ทางผาน Brevo/Discord/Telegram แลว (ticket #10) — `DRY_RUN=true` (คาเริ่มตน) = เขียน log
+> แบบ dry_run = ไมยิงอะไรเลย ปดแลว (`false`) จึงยิงจริง ดูวิธียืนยันกอนปดที่ `docs/deploy.md` ขอ 6–8
+> คอนฟิกทีม (people/channels/assignments) เติมผานหนา admin: `app/recipients` · `app/assignments` · `app/settings`;
+> คูมือชีตใหม: `docs/setup-google-sheet.md`; คู้มือตังคาผู้ส่งจริง (Brevo/Discord/Telegram): `docs/setup-senders.md`
+
+## Deploy ขึ้น Vercel (ticket #11)
+
+```bash
+# cron อยูใน vercel.json แลว (0 1 * * * UTC = 08:00 Asia/Bangkok) — deploy แรกเปด DRY_RUN เสมอ
+```
+
+คูมือ checklist แบบขั้นตองทำทีละขอกับมือ (Vercel project + env ครบ + secret ฝัง GitHub + manual
+trigger ทดสอบทางสำรอง + เติมคอลัมสถานะในชีต + วิธียอย DRY_RUN เปนสงจริง): **`docs/deploy.md`**
