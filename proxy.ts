@@ -72,5 +72,5 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 // เฉพาะหนาว็บ — ไมแตะ /auth/callback (route จัดการ session เอง) และไมแตะ /api/* (cron มี CRON_SECRET ของมอันเอง)
 export const config = {
-  matcher: ['/', '/login', '/history/:path*', '/recipients/:path*'],
+  matcher: ['/', '/login', '/history/:path*', '/recipients/:path*', '/settings/:path*'],
 };
