@@ -1,0 +1,48 @@
+# ทางสำรอง (fallback) ของ Vercel Cron — ยิง endpoint เดียวกันด้วย secret เดียวกัน (ticket #11)
+#
+# ปกติให้ Vercel Cron (vercel.json: 0 1 * * * UTC = 08:00 Asia/Bangkok) เป็นตัวยิงหลัก
+# workflow นี้ยิงซ้ำเวลา 01:30 UTC = 08:30 Asia/Bangkok — ถ้ารอบของ Vercel สำเร็จก่อน
+# การรันซ้ำในวันนี้ยังเป็นพฤติกรรมที่ยอมรับได้ตามสเปก (ทุกรอบรันเขียน log ของตัวเองใน notify_log)
+#
+# ตั้งค่าบน GitHub (Settings > Secrets and variables > Actions) — ห้าม hardcode ลงไฟล์นี้:
+#   CRON_SECRET  = ค่าเดียวกับ CRON_SECRET บน Vercel
+#   DEPLOY_URL   = URL production บน Vercel (คัดลอก URL จากหน้า Project Settings > Domains
+#                  — ตองไมมี /api ตอท้าย ไม hardcode โดเมนจริงลงไฟลน)
+#
+# ทดสอบด้วยตนเอง: Actions > "Cron fallback" > Run workflow (workflow_dispatch)
+name: "Cron fallback — ยิง /api/cron/daily-check"
+
+on:
+  schedule:
+    # หนัา Vercel cron 30 นาที (01:30 UTC = 08:30 Asia/Bangkok) — GitHub Actions cron ใช้ UTC เช่นกัน
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping-daily-check:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_URL: ${{ secrets.DEPLOY_URL || 'https://REPLACE-WITH-YOUR-PRODUCTION-URL.vercel.app' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: เช็คก่อนว่าตั้ง secret ครบ (ไม่ให้ยิงหา placeholder เงียบ ๆ)
+        run: |
+          if [[ "$DEPLOY_URL" == *REPLACE-WITH-YOUR-PRODUCTION-URL* ]]; then
+            echo "::error::ยังไม่ได้ตั้ง secret DEPLOY_URL (Settings > Secrets and variables > Actions)"
+            echo "ดูขั้นตอนที่ 4 ใน docs/deploy.md"
+            exit 1
+          fi
+          if [[ -z "$CRON_SECRET" ]]; then
+            echo "::error::ยังไม่ได้ตั้ง secret CRON_SECRET — endpoint จะตอบ 401"
+            echo "ดูขั้นตอนที่ 4 ใน docs/deploy.md"
+            exit 1
+          fi
+      - name: ยิง endpoint ด้วย x-cron-secret (POST — endpoint รับทั้ง GET/POST)
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 120 \
+            -X POST "$DEPLOY_URL/api/cron/daily-check" \
+            -H "x-cron-secret: $CRON_SECRET"
+        # --fail-with-body: workflow จะแดงเมื่อ endpoint ตอบ 4xx/5xx (เช่น 401 secret ผิด, 503 ไม่ได้ตั้ง CRON_SECRET)
+        # และพิมพ์ body ตอบกลับ (JSON เช่น {"ok":true,"mode":"dry_run","logged":N}) ไว้ใน log ของ Actions
