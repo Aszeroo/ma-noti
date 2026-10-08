@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import type { CSSProperties } from 'react';
-
-import { signOut } from '@/lib/auth/actions';
+import { DataTable, PageShell, cellStyle } from '@/components/ui';
 import { createSessionSupabaseClient } from '@/lib/supabase/session';
 
 export const metadata: Metadata = {
@@ -34,8 +32,6 @@ const thDateTime = new Intl.DateTimeFormat('th-TH-u-ca-buddhist', {
   minute: '2-digit',
 });
 
-const cellStyle: CSSProperties = { padding: '0.5rem 0.75rem', borderBottom: '1px solid #ddd' };
-
 /**
  * หนาประวัติการแจ้างเตือน (ticket #6) — อ่าน notify_log ดวย session ของผใู ช ผาน RLS
  * โครง schedule เขียน notify_log ดวย service role (มามาแล้วจาก ticket #2/#4) — หนาเว็บอานอยางเดียว
@@ -55,41 +51,11 @@ export default async function HistoryPage() {
   const rows = data ?? [];
 
   return (
-    <main
-      style={{
-        fontFamily: 'system-ui, sans-serif',
-        maxWidth: '56rem',
-        margin: '2rem auto',
-        padding: '0 1rem',
-        color: '#1a1a1a',
-      }}
+    <PageShell
+      title="ประวัติการแจ้างเตือน"
+      backHref="/recipients"
+      backLabel="จัดการผู้รับ"
     >
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          gap: '1rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <h1 style={{ margin: 0 }}>ประวัติการแจ้างเตือน</h1>
-        <form action={signOut}>
-          <button
-            type="submit"
-            style={{
-              padding: '0.375rem 1rem',
-              fontSize: '0.95rem',
-              backgroundColor: '#fff',
-              border: '1px solid #999',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-            }}
-          >
-            ออกจากระบบ
-          </button>
-        </form>
-      </header>
       <p style={{ color: '#555' }}>
         ประวตัิการรันของทอล้ิ งรายวัน (รอบการต่ออายุ) — คอลัมสถานะบอกวา DRY_RUN (ยงไมส่ งจริง) หรือส่ งแลว
       </p>
@@ -107,17 +73,15 @@ export default async function HistoryPage() {
       )}
 
       {rows.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
-          <thead>
-            <tr style={{ textAlign: 'left' }}>
-              <th style={cellStyle}>เวลา (Asia/Bangkok)</th>
-              <th style={cellStyle}>ผูรบ</th>
-              <th style={cellStyle}>ชองทาง</th>
-              <th style={cellStyle}>จำนวนรายการ</th>
-              <th style={cellStyle}>สถานะ</th>
-            </tr>
-          </thead>
-          <tbody>
+          <DataTable
+            headers={[
+              "เวลา (Asia/Bangkok)",
+              "ผูรบ",
+              "ชองทาง",
+              "จำนวนรายการ",
+              "สถานะ",
+            ]}
+          >
             {rows.map((row) => (
               <tr key={row.id}>
                 <td style={cellStyle}>{thDateTime.format(new Date(row.sent_at))}</td>
@@ -148,9 +112,8 @@ export default async function HistoryPage() {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </DataTable>
       )}
-    </main>
+    </PageShell>
   );
 }
